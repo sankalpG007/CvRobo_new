@@ -82,6 +82,21 @@ def init_database():
     )
     ''')
     
+    # --- NEW: Create users table for non-admin users ---
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        email TEXT NOT NULL UNIQUE,
+        password TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    ''')
+
+    # Add default admin user if it doesn't exist
+    cursor.execute('SELECT * FROM admin WHERE email = ?', ('admin@example.com',))
+    if cursor.fetchone() is None:
+        cursor.execute('INSERT INTO admin (email, password) VALUES (?, ?)', ('admin@example.com', 'admin123'))
+
     conn.commit()
     conn.close()
 
@@ -528,5 +543,58 @@ def reset_ai_analysis_stats():
         conn.rollback()
         print(f"Error resetting AI analysis stats: {e}")
         return {"success": False, "message": f"Error resetting AI analysis statistics: {str(e)}"}
+    finally:
+        conn.close()
+        
+# --- NEW: User-specific database functions ---
+
+def add_user(email, password):
+    """Add a new user"""
+    conn = get_database_connection()
+    cursor = conn.cursor()
+    
+    try:
+        # Note: In a real app, you would hash the password
+        cursor.execute('INSERT INTO users (email, password) VALUES (?, ?)', (email, password))
+        conn.commit()
+        return True
+    except sqlite3.IntegrityError:
+        # This error is raised if the email already exists
+        return False
+    except Exception as e:
+        print(f"Error adding user: {str(e)}")
+        conn.rollback()
+        return False
+    finally:
+        conn.close()
+
+def verify_user(email, password):
+    """Verify user credentials"""
+    conn = get_database_connection()
+    cursor = conn.cursor()
+    
+    try:
+        # Note: In a real app, you would hash the password
+        cursor.execute('SELECT * FROM users WHERE email = ? AND password = ?', (email, password))
+        result = cursor.fetchone()
+        return bool(result)
+    except Exception as e:
+        print(f"Error verifying user: {str(e)}")
+        return False
+    finally:
+        conn.close()
+
+def check_user_exists(email):
+    """Check if a user with the given email already exists"""
+    conn = get_database_connection()
+    cursor = conn.cursor()
+    
+    try:
+        cursor.execute('SELECT * FROM users WHERE email = ?', (email,))
+        result = cursor.fetchone()
+        return bool(result)
+    except Exception as e:
+        print(f"Error checking user existence: {str(e)}")
+        return False
     finally:
         conn.close()
