@@ -1,7 +1,7 @@
 import streamlit as st
 from typing import List, Dict
-from .job_portals import JobPortal
-from .suggestions import (
+from jobs.job_portals import JobPortal
+from jobs.suggestions import (
     JOB_SUGGESTIONS, 
     LOCATION_SUGGESTIONS, 
     EXPERIENCE_RANGES,
@@ -10,8 +10,8 @@ from .suggestions import (
     get_cities_by_state,
     get_all_states
 )
-from .companies import get_featured_companies, get_market_insights
-from .linkedin_scraper import render_linkedin_scraper
+from jobs.companies import get_featured_companies, get_market_insights
+from jobs.linkedin_scraper import render_linkedin_scraper
 from streamlit_extras.add_vertical_space import add_vertical_space
 from streamlit_option_menu import option_menu
 
